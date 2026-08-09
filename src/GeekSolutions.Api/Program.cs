@@ -3,23 +3,25 @@ using GeekSolutions.Infrastructure;
 using GeekSolutions.Application;
 using FluentValidation;
 
-var builder = WebApplication.CreateBuilder(new WebApplicationOptions
-{
-    Args = args,
-    EnvironmentName = Environments.Development,
+//var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+//{
+//    Args = args,
+//    EnvironmentName = Environments.Development,
     
-});
+//});
 
-builder.Environment.EnvironmentName = Environments.Development;
-builder.WebHost.UseUrls("http://localhost:5055");
+//builder.Environment.EnvironmentName = Environments.Development;
+//builder.WebHost.UseUrls("http://localhost:5055");
+
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowStaticWebsite", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:5500",   // Tu entorno de desarrollo local
-                "https://tu-dominio.com"   // Tu dominio o URL estática en producción
+                "http://localhost:5500",
+                "https://api.geeksolutions.com"
               )
               .AllowAnyHeader()
               .AllowAnyMethod();
