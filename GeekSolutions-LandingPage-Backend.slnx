@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GeekSolutions.Api/GeekSolutions.Api.csproj" />
+    <Project Path="src/GeekSolutions.Application/GeekSolutions.Application.csproj" />
+    <Project Path="src/GeekSolutions.Domain/GeekSolutions.Domain.csproj" />
+    <Project Path="src/GeekSolutions.Infrastructure/GeekSolutions.Infrastructure.csproj" />
+    <Project Path="src/GeekSolutions.InsightCore/GeekSolutions.InsightCore.csproj" />
+  </Folder>
+</Solution>
