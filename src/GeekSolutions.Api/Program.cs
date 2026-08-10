@@ -7,56 +7,70 @@ using FluentValidation;
 //{
 //    Args = args,
 //    EnvironmentName = Environments.Development,
-    
+
 //});
 
 //builder.Environment.EnvironmentName = Environments.Development;
 //builder.WebHost.UseUrls("http://localhost:5055");
 
-var builder = WebApplication.CreateBuilder(args);
+try 
+{ 
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowStaticWebsite", policy =>
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Services.AddCors(options =>
     {
-        policy.WithOrigins(
-                "http://localhost:5500",
-                "https://geeksolutions.com",
-                "https://www.geeksolutions.com"
-              )
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        options.AddPolicy("AllowStaticWebsite", policy =>
+        {
+            policy.WithOrigins(
+                    "http://localhost:5500",
+                    "https://geeksolutions.com",
+                    "https://www.geeksolutions.com"
+                  )
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
     });
-});
 
 
-// Registrar controladores y servicios
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+    // Registrar controladores y servicios
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 
-// Registrar la capa de infraestructura
-builder.Services.AddSwaggerGen();
-builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices(builder.Configuration);
+    // Registrar la capa de infraestructura
+    builder.Services.AddSwaggerGen();
+    builder.Services.AddApplicationServices();
+    builder.Services.AddInfrastructureServices(builder.Configuration);
 
-var app = builder.Build();
+    var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+    if (app.Environment.IsDevelopment())
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "GeekSolutions API V1");
-        c.RoutePrefix = "swagger";
-    });
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+        {
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "GeekSolutions API V1");
+            c.RoutePrefix = "swagger";
+        });
+    }
+
+    app.UseHttpsRedirection();
+
+    app.UseCors("AllowStaticWebsite");
+
+    app.UseAuthorization();
+    app.MapControllers();
+
+    app.Run();
+
 }
-
-app.UseHttpsRedirection();
-
-app.UseCors("AllowStaticWebsite");
-
-app.UseAuthorization();
-app.MapControllers();
-
-app.Run();
+catch (Exception ex)
+{
+    // Esto obligará a Docker a imprimir la falla exacta en la consola de EasyPanel
+    Console.WriteLine("================================================");
+    Console.WriteLine($"🔥 FATAL ERROR EN EL ARRANQUE: {ex.Message}");
+    Console.WriteLine(ex.ToString());
+    Console.WriteLine("================================================");
+    throw;
+}
