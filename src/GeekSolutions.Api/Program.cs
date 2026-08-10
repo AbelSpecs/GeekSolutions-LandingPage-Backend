@@ -21,22 +21,14 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5500",
-                "https://api.geeksolutions.com"
+                "https://geeksolutions.com",
+                "https://www.geeksolutions.com"
               )
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowStaticWebsite", policy =>
-    {
-        policy.AllowAnyOrigin()   // Permite peticiones desde Live Server o cualquier origen
-              .AllowAnyHeader()   // Permite encabezados como "Content-Type"
-              .AllowAnyMethod();  // Permite métodos POST, GET, OPTIONS, etc.
-    });
-});
 
 // Registrar controladores y servicios
 builder.Services.AddControllers();
