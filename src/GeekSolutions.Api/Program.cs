@@ -24,8 +24,8 @@ try
         {
             policy.WithOrigins(
                     "http://localhost:5500",
-                    "https://geeksolutions.com",
-                    "https://www.geeksolutions.com"
+                    "https://geek-solutions-landing-page-front.vercel.app",
+                    "https://www.geek-solutions-landing-page-front.vercel.app"
                   )
                   .AllowAnyHeader()
                   .AllowAnyMethod();
