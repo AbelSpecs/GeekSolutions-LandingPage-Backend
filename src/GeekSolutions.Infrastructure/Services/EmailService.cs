@@ -17,32 +17,47 @@ public class EmailService : IEmailService
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        var email = new MimeMessage();
-        email.From.Add(MailboxAddress.Parse(_configuration["EmailSettings:FromEmail"]));
-        email.To.Add(MailboxAddress.Parse(toEmail));
-        email.Subject = subject;
-
-        var builder = new BodyBuilder
+        try
         {
-            HtmlBody = body
-        };
-        email.Body = builder.ToMessageBody();
+            var email = new MimeMessage();
 
-        using var smtp = new SmtpClient();
+            // Cargar Remitente
+            var fromEmail = _configuration["EmailSettings:FromEmail"] ?? _configuration["EmailSettings:Username"];
+            email.From.Add(MailboxAddress.Parse(fromEmail));
+            email.To.Add(MailboxAddress.Parse(toEmail));
+            email.Subject = subject;
 
-        // Conexión con el servidor SMTP (ej. Gmail, SendGrid, Mailtrap)
-        await smtp.ConnectAsync(
-            _configuration["EmailSettings:SmtpServer"],
-            int.Parse(_configuration["EmailSettings:Port"]!),
-            SecureSocketOptions.StartTls
-        );
+            // Construir Cuerpo
+            var builder = new BodyBuilder
+            {
+                HtmlBody = body
+            };
+            email.Body = builder.ToMessageBody();
 
-        await smtp.AuthenticateAsync(
-            _configuration["EmailSettings:Username"],
-            _configuration["EmailSettings:Password"]
-        );
+            using var smtp = new SmtpClient();
 
-        await smtp.SendAsync(email);
-        await smtp.DisconnectAsync(true);
+            // Obtener puerto de forma segura (por defecto 587 si no existe en config)
+            int port = int.TryParse(_configuration["EmailSettings:Port"], out var parsedPort) ? parsedPort : 587;
+
+            string smtpServer = _configuration["EmailSettings:SmtpServer"] ?? "smtp.gmail.com";
+
+            // Usamos Auto para que MailKit elija automáticamente entre StartTls (587) o SslOnConnect (465)
+            await smtp.ConnectAsync(smtpServer, port, SecureSocketOptions.Auto);
+
+            await smtp.AuthenticateAsync(
+                _configuration["EmailSettings:Username"],
+                _configuration["EmailSettings:Password"]
+            );
+
+            await smtp.SendAsync(email);
+            await smtp.DisconnectAsync(true);
+        }
+        catch (Exception ex)
+        {
+            // Es recomendable loguear el error aquí para que puedas verlo en los logs de Render
+            // sin interrumpir ni colgar la petición HTTP de tu controlador.
+            Console.WriteLine($"Error al enviar el correo: {ex.Message}");
+            throw; // Puedes quitar este throw si prefieres que la API responda exitosamente aunque falle el correo
+        }
     }
 }
