@@ -37,12 +37,12 @@ public class EmailService : IEmailService
             using var smtp = new SmtpClient();
 
             // Obtener puerto de forma segura (por defecto 587 si no existe en config)
-            int port = int.TryParse(_configuration["EmailSettings:Port"], out var parsedPort) ? parsedPort : 587;
+            int port = int.TryParse(_configuration["EmailSettings:Port"], out var parsedPort) ? parsedPort : 465;
 
             string smtpServer = _configuration["EmailSettings:SmtpServer"] ?? "smtp.gmail.com";
 
             // Usamos Auto para que MailKit elija automáticamente entre StartTls (587) o SslOnConnect (465)
-            await smtp.ConnectAsync(smtpServer, port, SecureSocketOptions.Auto);
+            await smtp.ConnectAsync(smtpServer, port, SecureSocketOptions.SslOnConnect);
 
             await smtp.AuthenticateAsync(
                 _configuration["EmailSettings:Username"],

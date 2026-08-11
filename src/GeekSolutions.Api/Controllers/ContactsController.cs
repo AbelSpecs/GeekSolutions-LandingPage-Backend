@@ -38,14 +38,22 @@ public class ContactsController : ControllerBase
         };
         await _contactRepository.InsertContactAsync(contact);
 
-        string htmlBody = $@"
-            <h2>¡Hola {contact.Name}!</h2>
-            <p>Hemos recibido tu mensaje correctamente.</p>
-            <p>Nos pondremos en contacto contigo lo antes posible.</p>
-            <br>
-            <p>Atentamente,<br><strong>El equipo de Geek Solutions</strong></p>";
+        try
+        {
+            string htmlBody = $@"
+                <h2>¡Hola {contact.Name}!</h2>
+                <p>Hemos recibido tu mensaje correctamente.</p>
+                <p>Nos pondremos en contacto contigo lo antes posible.</p>
+                <br>
+                <p>Atentamente,<br><strong>El equipo de Geek Solutions</strong></p>";
 
-        await _emailService.SendEmailAsync(contactDto.Email, "Nuevo contacto", htmlBody);
+            await _emailService.SendEmailAsync(contactDto.Email, "Nuevo contacto", htmlBody);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[EMAIL TIMEOUT ERROR]: {ex.Message}");
+        }
         return Ok(contact);
     }
 
