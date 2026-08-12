@@ -3,61 +3,54 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace GeekSolutions.Infrastructure.Services;
 
 public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
+    private readonly HttpClient _httpClient;
 
     public EmailService(IConfiguration configuration)
     {
         _configuration = configuration;
+        _httpClient = new HttpClient();
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
     {
+       
+        string apiKey = _configuration["EmailSettings:ResendApiKey"]!;
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+
+        var payload = new
+        {
+            from = "Geek Solutions",
+            to = new[] { toEmail },
+            subject = subject,
+            html = body
+        };
+
+        request.Content = JsonContent.Create(payload);
+
         try
         {
-            var email = new MimeMessage();
+            var response = await _httpClient.SendAsync(request);
 
-            // Cargar Remitente
-            var fromEmail = _configuration["EmailSettings:FromEmail"] ?? _configuration["EmailSettings:Username"];
-            email.From.Add(MailboxAddress.Parse(fromEmail));
-            email.To.Add(MailboxAddress.Parse(toEmail));
-            email.Subject = subject;
-
-            // Construir Cuerpo
-            var builder = new BodyBuilder
+            if (!response.IsSuccessStatusCode)
             {
-                HtmlBody = body
-            };
-            email.Body = builder.ToMessageBody();
-
-            using var smtp = new SmtpClient();
-
-            // Obtener puerto de forma segura (por defecto 587 si no existe en config)
-            int port = int.TryParse(_configuration["EmailSettings:Port"], out var parsedPort) ? parsedPort : 465;
-
-            string smtpServer = _configuration["EmailSettings:SmtpServer"] ?? "smtp.gmail.com";
-
-            // Usamos Auto para que MailKit elija automáticamente entre StartTls (587) o SslOnConnect (465)
-            await smtp.ConnectAsync(smtpServer, port, SecureSocketOptions.SslOnConnect);
-
-            await smtp.AuthenticateAsync(
-                _configuration["EmailSettings:Username"],
-                _configuration["EmailSettings:Password"]
-            );
-
-            await smtp.SendAsync(email);
-            await smtp.DisconnectAsync(true);
+                string errorResponse = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error enviando correo a través de Resend: {errorResponse}");
+            }
         }
         catch (Exception ex)
         {
-            // Es recomendable loguear el error aquí para que puedas verlo en los logs de Render
-            // sin interrumpir ni colgar la petición HTTP de tu controlador.
-            Console.WriteLine($"Error al enviar el correo: {ex.Message}");
-            throw; // Puedes quitar este throw si prefieres que la API responda exitosamente aunque falle el correo
+            Console.WriteLine($"[RESEND API ERROR]: {ex.Message}");
+            throw;
         }
     }
 }
