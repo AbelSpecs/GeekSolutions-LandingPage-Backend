@@ -23,13 +23,14 @@ public class EmailService : IEmailService
     {
        
         string apiKey = _configuration["EmailSettings:ResendApiKey"]!;
+        string fromEmail = _configuration["EmailSettings:FromEmail"]!;
 
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
         var payload = new
         {
-            from = "Geek Solutions",
+            from = fromEmail,
             to = new[] { toEmail },
             subject = subject,
             html = body
